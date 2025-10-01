@@ -100,14 +100,16 @@ with st.sidebar:
     st.markdown("""
     **Étapes :**
     1. Entrez vos identifiants
-    2. Chargez votre fichier XML
-    3. Vérifiez la validation
-    4. Cliquez sur Uploader
+    2. Testez la connexion 🔌
+    3. Chargez votre fichier XML
+    4. Vérifiez la validation
+    5. Cliquez sur Uploader
     
     **Sécurité :**
     - Connexion SSH chiffrée
     - Identifiants non stockés
     - Validation XML automatique
+    - Test préalable recommandé
     """)
 
 # Zone de connexion
@@ -133,24 +135,64 @@ with col_pass:
 # Vérifier si les identifiants sont renseignés
 credentials_provided = bool(username and password)
 
-if not credentials_provided:
-    st.warning("⚠️ Veuillez renseigner vos identifiants SSH pour continuer")
-    st.info("💡 **Note :** Vos identifiants ne sont pas stockés et sont uniquement utilisés pour cette session")
+# Bouton de test de connexion
+col_test, col_status = st.columns([1, 3])
+
+with col_test:
+    test_button = st.button("🔌 Tester la connexion", disabled=not credentials_provided, use_container_width=True)
+
+with col_status:
+    if not credentials_provided:
+        st.warning("⚠️ Veuillez renseigner vos identifiants SSH pour tester la connexion")
+    elif 'connection_tested' not in st.session_state:
+        st.info("💡 Cliquez sur 'Tester la connexion' pour vérifier vos identifiants")
+
+# Test de connexion
+if test_button:
+    with st.spinner('🔄 Test de connexion en cours...'):
+        client, success, message = ssh_connect(HOSTNAME, PORT, username, password)
+        
+        if success:
+            st.session_state.connection_tested = True
+            st.session_state.connection_success = True
+            client.close()
+            st.success(f"✅ {message} - Vous pouvez maintenant uploader vos fichiers !")
+        else:
+            st.session_state.connection_tested = True
+            st.session_state.connection_success = False
+            st.error(message)
+            st.warning("💡 Vérifiez vos identifiants et réessayez")
+
+# Afficher le statut de la connexion si déjà testée
+if 'connection_tested' in st.session_state and not test_button:
+    if st.session_state.connection_success:
+        with col_status:
+            st.success("✅ Connexion vérifiée avec succès")
+    else:
+        with col_status:
+            st.error("❌ La dernière tentative de connexion a échoué")
 
 st.markdown("---")
 
 # Interface principale - Upload de fichier
 if credentials_provided:
+    # Vérifier si la connexion a été testée avec succès
+    connection_verified = st.session_state.get('connection_success', False)
+    
+    if not connection_verified:
+        st.info("ℹ️ Pour uploader des fichiers, testez d'abord votre connexion SSH ci-dessus")
+    
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.header("📁 Upload de fichier XML")
         
-        # Upload de fichier
+        # Upload de fichier - désactivé si connexion non testée
         uploaded_file = st.file_uploader(
             "Choisissez un fichier XML",
             type=['xml'],
-            help="Sélectionnez un fichier XML à uploader vers le serveur Pixid"
+            help="Sélectionnez un fichier XML à uploader vers le serveur Pixid" if connection_verified else "Testez d'abord votre connexion SSH",
+            disabled=not connection_verified
         )
         
         if uploaded_file is not None:
@@ -247,6 +289,7 @@ if credentials_provided:
         ### Avant l'upload :
         
         - ✅ Identifiants renseignés
+        - ⬜ Connexion testée
         - ⬜ Fichier XML chargé
         - ⬜ Validation réussie
         - ⬜ Nom vérifié
@@ -265,6 +308,10 @@ if credentials_provided:
         - Sont utilisés **uniquement** pour cette session
         - Sont transmis de manière **chiffrée**
         
+        ### 💡 Astuce :
+        
+        Testez toujours votre connexion avant de charger un fichier !
+        
         ### 📞 Support :
         
         En cas de problème :
@@ -275,14 +322,14 @@ if credentials_provided:
 
 else:
     # Message si pas d'identifiants
-    st.info("👆 Renseignez vos identifiants SSH ci-dessus pour accéder à l'interface d'upload")
+    st.info("👆 Renseignez vos identifiants SSH ci-dessus puis testez la connexion avant d'uploader des fichiers")
 
 # Footer
 st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: gray;'>
-        <small>Pixid XML Uploader v2.0 | Authentification interactive | Développé avec Streamlit</small>
+        <small>Pixid XML Uploader v2.1 | Test de connexion | Développé avec Streamlit</small>
     </div>
     """,
     unsafe_allow_html=True
