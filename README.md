@@ -4,12 +4,15 @@ Application Streamlit pour uploader des fichiers XML vers le serveur d'intégrat
 
 ## 🎯 Fonctionnalités
 
+- 🔐 **Authentification interactive** : Saisissez vos identifiants à chaque utilisation
+- 🔌 **Test de connexion** : Vérifiez vos identifiants avant d'uploader
 - ✅ Validation automatique des fichiers XML
 - 🔒 Connexion SSH sécurisée
 - 📤 Upload SFTP vers `inbox/`
 - 👁️ Prévisualisation du contenu XML
 - 📊 Statistiques d'upload
 - 🎨 Interface conviviale
+- 🚫 **Aucun stockage des identifiants**
 
 ## 🚀 Installation locale
 
@@ -37,32 +40,14 @@ source venv/bin/activate  # Sur Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configurer les secrets**
-
-Créez le dossier `.streamlit/` et le fichier `secrets.toml` :
-
-```bash
-mkdir .streamlit
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-```
-
-Éditez `.streamlit/secrets.toml` avec vos vrais identifiants :
-
-```toml
-[ssh]
-hostname = "integrationprod.pixid-services.net"
-port = 22
-username = "votre_identifiant"
-password = "votre_mot_de_passe"
-remote_path = "inbox"
-```
-
-5. **Lancer l'application**
+4. **Lancer l'application**
 ```bash
 streamlit run app.py
 ```
 
 L'application s'ouvrira automatiquement dans votre navigateur à `http://localhost:8501`
+
+**Note :** Vous saisirez vos identifiants SSH directement dans l'interface à chaque utilisation.
 
 ## ☁️ Déploiement sur Streamlit Cloud
 
@@ -88,34 +73,32 @@ git push -u origin main
 4. Sélectionnez votre repository `pixid-xml-uploader`
 5. Branch : `main`
 6. Main file path : `app.py`
-7. Cliquez sur "Advanced settings"
-8. Dans la section "Secrets", collez le contenu de votre `secrets.toml` :
-
-```toml
-[ssh]
-hostname = "integrationprod.pixid-services.net"
-port = 22
-username = "votre_identifiant"
-password = "votre_mot_de_passe"
-remote_path = "inbox"
-```
-
-9. Cliquez sur "Deploy"
+7. Cliquez sur "Deploy"
 
 🎉 Votre application sera accessible via une URL publique (ex: `https://pixid-xml-uploader.streamlit.app`)
 
+**Note :** Aucune configuration de secrets n'est nécessaire ! Les utilisateurs saisissent leurs identifiants directement dans l'interface.
+
 ## 📖 Utilisation
 
-1. **Uploader un fichier** : Cliquez sur "Browse files" ou glissez-déposez votre fichier XML
-2. **Vérifier la validation** : L'application valide automatiquement la structure XML
-3. **Personnaliser le nom** (optionnel) : Modifiez le nom du fichier si nécessaire
-4. **Uploader** : Cliquez sur le bouton "📤 Uploader"
+1. **Saisir vos identifiants** : Entrez votre nom d'utilisateur et mot de passe SSH dans les champs en haut de la page
+2. **Tester la connexion** : Cliquez sur "🔌 Tester la connexion" pour vérifier vos identifiants
+3. **Uploader un fichier** : Une fois la connexion validée, cliquez sur "Browse files" ou glissez-déposez votre fichier XML
+4. **Vérifier la validation** : L'application valide automatiquement la structure XML
+5. **Personnaliser le nom** (optionnel) : Modifiez le nom du fichier si nécessaire
+6. **Uploader** : Cliquez sur le bouton "📤 Uploader"
+
+**Important :** 
+- Vos identifiants ne sont pas stockés et doivent être saisis à chaque session
+- Le test de connexion est **fortement recommandé** avant de charger un fichier
 
 ## 🔒 Sécurité
 
-- ⚠️ **Ne jamais** commiter le fichier `.streamlit/secrets.toml` sur GitHub
-- ✅ Les credentials sont stockés de manière sécurisée dans Streamlit Cloud
-- 🔐 Connexion SSH/SFTP chiffrée
+- ⚠️ Les identifiants sont saisis à chaque session et **ne sont jamais stockés**
+- ✅ Connexion SSH/SFTP chiffrée (TLS)
+- 🔐 Les mots de passe sont masqués dans l'interface
+- 🚫 Aucune persistance des credentials
+- ✅ Validation XML avant upload
 
 ## 🛠️ Technologies utilisées
 
@@ -128,8 +111,7 @@ remote_path = "inbox"
 ```
 pixid-xml-uploader/
 ├── .streamlit/
-│   ├── secrets.toml.example    # Template de configuration
-│   └── secrets.toml            # Configuration réelle (non versionné)
+│   └── secrets.toml.example    # Template (optionnel, pour référence)
 ├── app.py                       # Application principale
 ├── requirements.txt             # Dépendances Python
 ├── .gitignore                  # Fichiers à ignorer
@@ -140,9 +122,22 @@ pixid-xml-uploader/
 
 ### Erreur de connexion SSH
 
-- Vérifiez que vos identifiants sont corrects dans `secrets.toml`
-- Vérifiez que le serveur est accessible (firewall)
+- Vérifiez que vos identifiants sont corrects
+- Vérifiez que le serveur est accessible (firewall, VPN)
 - Testez manuellement la connexion : `ssh username@integrationprod.pixid-services.net`
+
+### Identifiants non acceptés
+
+- Assurez-vous d'avoir saisi le bon nom d'utilisateur (sensible à la casse)
+- Vérifiez qu'il n'y a pas d'espaces avant/après les identifiants
+- Utilisez le bouton "Tester la connexion" pour diagnostiquer le problème
+- Contactez l'équipe technique pour vérifier vos accès
+
+### Le bouton "Tester la connexion" ne répond pas
+
+- Vérifiez votre connexion internet
+- Assurez-vous que vous n'êtes pas derrière un proxy bloquant
+- Vérifiez que le port 22 est accessible depuis votre réseau
 
 ### Erreur "Module not found"
 
